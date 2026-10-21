@@ -1,0 +1,4 @@
+1. Prompts to give Claude or Codex to search the codebase for issues and all
+2. Description of the system.
+3. Prompts would be in READMEs
+4. Use with GPT LUNA then Claude then Codex? From the Copilot tab

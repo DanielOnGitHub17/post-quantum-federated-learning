@@ -1,0 +1,5 @@
+1. Full flask app with web page
+2. Binary will be uploaded
+3. Key would be extracted from here
+4. And verification will occur
+5. And results will be sent to the person who used that it's okay
