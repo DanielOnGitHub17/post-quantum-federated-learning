@@ -1,0 +1,6 @@
+Find datasets for companies’ stock. Get up to 6 or 10
+Code Linear Regression model for each company to predict for each next day
+Code central flask server for collecting and combining results.
+You can use JSON for db
+The models will possibly be formulas. They can be pickled. PMOs (partial model outputs)
+Then one large pickled file will be the central
