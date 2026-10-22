@@ -1,4 +1,5 @@
-1. Prompts to give Claude or Codex to search the codebase for issues and all
+1. Prompts to give Codex to search the codebase for issues and all
 2. Description of the system.
 3. Prompts would be in READMEs
-4. Use with GPT LUNA then Claude then Codex? From the Copilot tab
+4. Use Codex best model from the Codex extension tab
+5. Generate results from searching the codebase
