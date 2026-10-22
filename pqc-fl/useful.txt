@@ -1,0 +1,7 @@
+from falcon import Falcon
+
+secret_key, verification_key = falc.keygen()
+
+signature = falc.sign(secret_key, message)
+
+falc.verify(verification_key, message, signature)
