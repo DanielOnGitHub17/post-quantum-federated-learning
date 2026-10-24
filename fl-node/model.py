@@ -6,9 +6,13 @@ After generation, it will be signed by kyber and transfered to central server
 import yfinance as yf
 import numpy as np
 import pickle
+import logging
+import time
 from pathlib import Path
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, LSTM
+
+logger = logging.getLogger(__name__)
 
 PERIOD = "5y"
 INTERVAL = "1d"
@@ -16,10 +20,24 @@ WINDOW_SIZE = 60
 FORECAST_DAYS = 3
 EPOCHS = 20
 MODEL_DIRECTORY = Path(__file__).parent / "models"
+COMPANY_NAMES = {
+    "NVDA": "NVIDIA",
+    "AAPL": "Apple",
+    "MSFT": "Microsoft",
+    "GOOGL": "Alphabet Class A",
+    "AMZN": "Amazon",
+    "META": "Meta Platforms",
+}
 
 
 def _get_close_data(company):
+    start_time = time.perf_counter()
     data = yf.download(company, period=PERIOD, interval=INTERVAL)
+    logger.info(
+        "Fetching data for %s took %.3f seconds",
+        company,
+        time.perf_counter() - start_time,
+    )
     if data is None or data.empty:
         raise ValueError(f"No data found for company: {company}")
     close_data = data[["Close"]].reset_index()
@@ -28,6 +46,10 @@ def _get_close_data(company):
 
 
 def train_lstm(company):
+    if not isinstance(company, str) or company.upper() not in COMPANY_NAMES:
+        raise ValueError(f"Unsupported company: {company}")
+    company = company.upper()
+
     model_path = MODEL_DIRECTORY / f"{company.upper()}_lstm.pkl"
     if model_path.exists():
         with model_path.open("rb") as model_file:
@@ -54,6 +76,7 @@ def train_lstm(company):
         inputs.append(scaled_prices[start:end])
         targets.append(prices[end : end + FORECAST_DAYS])
 
+    initialization_start_time = time.perf_counter()
     model = Sequential(
         [
             LSTM(64, input_shape=(WINDOW_SIZE, 1)),
@@ -61,12 +84,22 @@ def train_lstm(company):
         ]
     )
     model.compile(optimizer="adam", loss="mean_squared_error")
+    logger.info(
+        "Initializing the model took %.3f seconds",
+        time.perf_counter() - initialization_start_time,
+    )
+
+    training_start_time = time.perf_counter()
     model.fit(
         np.asarray(inputs)[..., np.newaxis],
         np.asarray(targets),
         epochs=EPOCHS,
         batch_size=32,
         verbose=0,
+    )
+    logger.info(
+        "Training the model took %.3f seconds",
+        time.perf_counter() - training_start_time,
     )
     MODEL_DIRECTORY.mkdir(exist_ok=True)
     with model_path.open("wb") as model_file:
