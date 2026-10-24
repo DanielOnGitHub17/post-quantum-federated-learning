@@ -150,7 +150,7 @@ def start_federated_learning() -> dict[str, Any]:
         len(results),
         NODES,
     )
-    combined = combsign.combine_pmos(results)
+    artifacts = combsign.combine_pmos(results)
     logger.info(
         "Node results combined successfully: results_received=%d",
         len(results),
@@ -158,10 +158,8 @@ def start_federated_learning() -> dict[str, Any]:
     return {
         "status": "completed",
         "results_received": len(results),
-        "combined": combined,
+        "artifacts": {name: str(path) for name, path in artifacts.items()},
     }
-
-
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
