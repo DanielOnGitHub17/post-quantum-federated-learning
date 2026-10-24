@@ -35,8 +35,7 @@ def train():
         return jsonify({"error": "public_key must be a valid Base64 string"}), 400
 
     model_bytes = model.train_lstm(payload["company_name"])
-    encoded_model = base64.b64encode(model_bytes).decode("ascii")
-    result = kyber_cryptography.encrypt(encoded_model.encode("ascii"), public_key)
+    result = kyber_cryptography.encrypt(model_bytes, public_key)
 
     return jsonify({"status": "training_completed", "result": result}), 200
 
