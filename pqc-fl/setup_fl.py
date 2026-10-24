@@ -120,19 +120,17 @@ def start_federated_learning() -> dict[str, Any]:
         if company in failures:
             continue
         try:
-            encoded_model = kyber_cryptography.decrypt(
+            results[company] = kyber_cryptography.decrypt(
                 encrypted_result,
                 private_key=private_keys[company],
                 company_name=company,
             )
-            results[company] = base64.b64decode(
-                encoded_model.encode("ascii"),
-                validate=True,
-            )
             logger.info("Decrypted node result: company=%s", company)
         except (ValueError, TypeError) as error:
             failures[company] = str(error)
-            logger.error("Node result decryption failed: company=%s error=%s", company, error)
+            logger.error(
+                "Node result decryption failed: company=%s error=%s", company, error
+            )
 
     if failures:
         logger.error(
