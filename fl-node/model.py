@@ -9,8 +9,8 @@ import pickle
 import logging
 import time
 from pathlib import Path
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, LSTM
+from tensorflow.keras import Sequential  # type: ignore[reportMissingModuleSource]
+from tensorflow.keras.layers import Dense, LSTM  # type: ignore[reportMissingModuleSource]
 
 logger = logging.getLogger(__name__)
 
