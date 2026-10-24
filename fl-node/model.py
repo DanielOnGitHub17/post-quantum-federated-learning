@@ -52,8 +52,7 @@ def train_lstm(company):
 
     model_path = MODEL_DIRECTORY / f"{company.upper()}_lstm.pkl"
     if model_path.exists():
-        with model_path.open("rb") as model_file:
-            return pickle.load(model_file)
+        return model_path.read_bytes()
 
     close_data = _get_close_data(company)
     prices = close_data["close"].to_numpy(dtype=np.float32)
@@ -102,14 +101,14 @@ def train_lstm(company):
         time.perf_counter() - training_start_time,
     )
     MODEL_DIRECTORY.mkdir(exist_ok=True)
-    with model_path.open("wb") as model_file:
-        pickle.dump(model, model_file)
-    return model
+    model_bytes = pickle.dumps(model)
+    model_path.write_bytes(model_bytes)
+    return model_bytes
 
 
 if __name__ == "__main__":
     company = "MSFT"
-    model = train_lstm(company)
+    model = pickle.loads(train_lstm(company))
     close_data = _get_close_data(company)
     prices = close_data["close"].to_numpy(dtype=np.float32)
     minimum = prices.min()
