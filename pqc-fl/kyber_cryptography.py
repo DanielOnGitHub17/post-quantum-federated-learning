@@ -1,8 +1,11 @@
 import base64
 import hashlib
+import logging
 import time
 
 from kyber_py.ml_kem import ML_KEM_512
+
+logger = logging.getLogger(__name__)
 
 _PUBLIC_KEY, _PRIVATE_KEY = ML_KEM_512.keygen()
 _KEM_CIPHERTEXT_SIZE = 32 * (ML_KEM_512.du * ML_KEM_512.k + ML_KEM_512.dv)
@@ -57,7 +60,12 @@ def encrypt(plain_text: str, public_key: bytes = _PUBLIC_KEY) -> str:
     return cipher_text
 
 
-def decrypt(cipher_text: str, private_key: bytes = _PRIVATE_KEY) -> str:
+def decrypt(
+    cipher_text: str,
+    private_key: bytes = _PRIVATE_KEY,
+    *,
+    company_name: str = "unknown",
+) -> str:
     """Decrypt a Base64 string and return the original text."""
     if not isinstance(cipher_text, str):
         raise TypeError("cipher_text must be a string")
@@ -70,12 +78,14 @@ def decrypt(cipher_text: str, private_key: bytes = _PRIVATE_KEY) -> str:
     plain_text = _xor_with_keystream(encrypted_text, shared_key)
     decrypted_text = plain_text.decode("utf-8")
     elapsed_ms = (time.perf_counter() - start_time) * 1000
-    print(
-        "Decrypt: "
-        f"private key={len(private_key)} bytes, "
-        f"data={len(encrypted)} bytes, "
-        f"output={len(plain_text)} bytes, "
-        f"time={elapsed_ms:.3f} ms"
+    logger.info(
+        "Decrypted result for company=%s: private_key_bytes=%d "
+        "ciphertext_bytes=%d plaintext_bytes=%d duration_ms=%.3f",
+        company_name,
+        len(private_key),
+        len(encrypted),
+        len(plain_text),
+        elapsed_ms,
     )
     return decrypted_text
 
