@@ -11,6 +11,11 @@ _PUBLIC_KEY, _PRIVATE_KEY = ML_KEM_512.keygen()
 _KEM_CIPHERTEXT_SIZE = 32 * (ML_KEM_512.du * ML_KEM_512.k + ML_KEM_512.dv)
 
 
+def generate_key_pair() -> tuple[bytes, bytes]:
+    """Generate a fresh ML-KEM-512 public/private key pair."""
+    return ML_KEM_512.keygen()
+
+
 def key_material() -> dict[str, str | int]:
     """Return demo key material in a JSON-safe representation."""
     return {
