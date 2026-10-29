@@ -1,5 +1,18 @@
-1. Prompts to give Codex to search the codebase for issues and all
-2. Description of the system.
-3. Prompts would be in READMEs
-4. Use Codex best model from the Codex extension tab
-5. Generate results from searching the codebase
+1. - Create prompts for Codex and GitHub copilot to find issues in the codebase
+
+- Only look for issues in places where we used Post Quantum Cryptography
+- Issues should only be related to Post Quantum Computing
+- Parts of code to look at
+-  Under pqc-fl
+    - combsign.py
+    - kyber_cryptography.py
+    - setup_fl.py
+-  Under fl-node
+    - kyber_cryptography.py
+    - node_server.py
+
+2. - Ask the model to generate a report of issues and a plan to fix them
+- The AI model (from codex or from GitHub copilot) should read some instructions from ai-cryptanalyzer/instructions/*.md
+- And write a corresponding report to a file in ai-cryptanalyzer/instructions/*.md. the report should contain
+the model used, date, etc
+- Also write a plan to fix in the report
