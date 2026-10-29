@@ -1,3 +1,16 @@
+Daniel:
+Create secret_key and verification_key. Put both somewhere Nonso can get.
+
+Create the application binary
+Use sha-256 to hash it and make it small.
+Generate a signature from the small hash using secret key
+
+Nonso:
+get an application binary
+Use sha-256 tohash it and make it small
+Use OUR verification_key and OUR signature to verify it
+Return true or false.
+
 from falcon import Falcon
 
 secret_key, verification_key = falc.keygen()
