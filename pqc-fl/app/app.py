@@ -8,6 +8,7 @@ from tkinter import messagebox, ttk
 from typing import Any
 
 import numpy as np
+import keras
 import yfinance as yf
 
 COMPANIES = {"NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META"}
@@ -19,10 +20,20 @@ MODEL_BUNDLE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / "models.p
 def load_models() -> dict[str, Any]:
     if not MODEL_BUNDLE.exists():
         raise FileNotFoundError(f"Model bundle not found: {MODEL_BUNDLE}")
+    if not hasattr(keras, "Model"):
+        raise RuntimeError("Keras is not available for model deserialization")
     with MODEL_BUNDLE.open("rb") as bundle_file:
-        models = pickle.load(bundle_file)
-    if not isinstance(models, dict):
+        serialized_models = pickle.load(bundle_file)
+    if not isinstance(serialized_models, dict):
         raise ValueError("Model bundle must contain a company-to-model map")
+
+    models: dict[str, Any] = {}
+    for company, serialized_model in serialized_models.items():
+        if not isinstance(company, str) or not isinstance(serialized_model, bytes):
+            raise ValueError(
+                "Model bundle entries must contain company names and serialized models"
+            )
+        models[company] = pickle.loads(serialized_model)
     return models
 
 
