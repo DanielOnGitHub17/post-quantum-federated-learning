@@ -31,6 +31,12 @@ COMPANY_NAMES = {
 
 
 def _get_close_data(company):
+    logger.info(
+        "Fetching close-price data for company=%s (period=%s, interval=%s)",
+        company,
+        PERIOD,
+        INTERVAL,
+    )
     start_time = time.perf_counter()
     data = yf.download(company, period=PERIOD, interval=INTERVAL)
     logger.info(
@@ -39,25 +45,36 @@ def _get_close_data(company):
         time.perf_counter() - start_time,
     )
     if data is None or data.empty:
+        logger.error("No close-price data returned for company=%s", company)
         raise ValueError(f"No data found for company: {company}")
     close_data = data[["Close"]].reset_index()
     close_data.columns = ["date", "close"]
+    logger.info("Loaded %d close-price rows for company=%s", len(close_data), company)
     return close_data
 
 
 def train_lstm(company):
+    logger.info("Preparing model for company=%s", company)
     if not isinstance(company, str) or company.upper() not in COMPANY_NAMES:
+        logger.warning("Unsupported company requested: %s", company)
         raise ValueError(f"Unsupported company: {company}")
     company = company.upper()
 
     model_path = MODEL_DIRECTORY / f"{company.upper()}_lstm.pkl"
     if model_path.exists():
+        logger.info("Using cached model for company=%s from %s", company, model_path)
         return model_path.read_bytes()
 
     close_data = _get_close_data(company)
     prices = close_data["close"].to_numpy(dtype=np.float32)
 
     if len(prices) < WINDOW_SIZE + FORECAST_DAYS:
+        logger.error(
+            "Insufficient price history for company=%s: %d rows available, %d required",
+            company,
+            len(prices),
+            WINDOW_SIZE + FORECAST_DAYS,
+        )
         raise ValueError(
             f"At least {WINDOW_SIZE + FORECAST_DAYS} closing prices are required"
         )
@@ -65,6 +82,7 @@ def train_lstm(company):
     minimum = prices.min()
     maximum = prices.max()
     if maximum == minimum:
+        logger.error("Price history for company=%s has no variation", company)
         raise ValueError("Closing prices must not all have the same value")
 
     scaled_prices = (prices - minimum) / (maximum - minimum)
@@ -74,6 +92,12 @@ def train_lstm(company):
         end = start + WINDOW_SIZE
         inputs.append(scaled_prices[start:end])
         targets.append(prices[end : end + FORECAST_DAYS])
+    logger.info(
+        "Prepared %d training samples for company=%s using window=%d",
+        len(inputs),
+        company,
+        WINDOW_SIZE,
+    )
 
     initialization_start_time = time.perf_counter()
     model = Sequential(
@@ -103,10 +127,20 @@ def train_lstm(company):
     MODEL_DIRECTORY.mkdir(exist_ok=True)
     model_bytes = pickle.dumps(model)
     model_path.write_bytes(model_bytes)
+    logger.info(
+        "Saved trained model for company=%s to %s (%d bytes)",
+        company,
+        model_path,
+        len(model_bytes),
+    )
     return model_bytes
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
     company = "MSFT"
     model = pickle.loads(train_lstm(company))
     close_data = _get_close_data(company)
