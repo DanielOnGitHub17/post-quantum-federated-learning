@@ -36,6 +36,7 @@ Pygments==2.21.0
 pyinstaller==6.22.3
 pyinstaller-hooks-contrib==2026.9
 python-dateutil==3.0.0
+python-dotenv==1.2.4
 pytz==2026.5
 pywin32-ctypes==0.2.3
 requests==2.34.2

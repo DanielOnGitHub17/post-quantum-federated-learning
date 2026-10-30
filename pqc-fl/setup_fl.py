@@ -7,14 +7,17 @@ import os
 from typing import Any
 
 import requests
+from dotenv import load_dotenv
 
 import combsign
 import kyber_cryptography
 
+load_dotenv()
+
 logger = logging.getLogger(__name__)
 
-NODES = 6
-COMPANY_NAMES = ("NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META")
+NODES = 2
+COMPANY_NAMES = ("NVDA", "AAPL")  # , "MSFT", "GOOGL", "AMZN", "META")
 REQUEST_TIMEOUT = (5, 300)
 
 
@@ -37,7 +40,7 @@ def node_endpoints() -> dict[str, str]:
             raise ValueError(f"Unsupported company in NODE_ENDPOINTS: {company}")
         if company in endpoints:
             raise ValueError(f"Duplicate company in NODE_ENDPOINTS: {company}")
-        endpoints[company] = endpoint
+        endpoints[company] = f"{endpoint}/train/"
 
     if len(endpoints) != NODES or set(endpoints) != set(COMPANY_NAMES):
         raise ValueError(
@@ -160,6 +163,8 @@ def start_federated_learning() -> dict[str, Any]:
         "results_received": len(results),
         "artifacts": {name: str(path) for name, path in artifacts.items()},
     }
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,

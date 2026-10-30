@@ -1,9 +1,6 @@
 """Build and Falcon-sign the prediction application."""
 
 from hashlib import sha256
-import base64
-import binascii
-import os
 import pickle
 from pathlib import Path
 import shutil
@@ -18,14 +15,14 @@ def combine_pmos(
 ) -> dict[str, Path]:
     """Bundle PMOs, build the Windows app, and sign its executable.
 
-    The signature is made over the executable's SHA-256 digest. Falcon keys
-    are loaded from environment variables and the private key is never
-    written to disk.
+    The signature is made over the executable's SHA-256 digest. A new Falcon
+    key pair is generated for each build. The public verification key and
+    detached signature are written alongside the executable.
     """
     if not pmos:
         raise ValueError("At least one PMO is required")
 
-    signing_private_key, verification_key = _falcon_signing_keys()
+    verification_key, signing_private_key = Falcon512.generate_keypair()
 
     app_path = (
         Path(app_directory)
@@ -34,9 +31,7 @@ def combine_pmos(
     )
     app_path.mkdir(parents=True, exist_ok=True)
     bundle_path = app_path / "models.pkl"
-    bundle_path.write_bytes(
-        pickle.dumps(dict(sorted(pmos.items())), protocol=pickle.HIGHEST_PROTOCOL)
-    )
+    bundle_path.write_bytes(pickle.dumps(pmos, protocol=pickle.HIGHEST_PROTOCOL))
 
     executable_path = _build_executable(app_path, bundle_path)
     digest = sha256(executable_path.read_bytes()).digest()
@@ -56,25 +51,6 @@ def combine_pmos(
         "signature": signature_path,
         "verification_key": verification_path,
     }
-
-
-def _falcon_signing_keys() -> tuple[bytes, bytes]:
-    """Load Base64-encoded Falcon keys from the environment."""
-    private_value = os.getenv("FALCON_PRIVATE_KEY")
-    verification_value = os.getenv("FALCON_VERIFICATION_KEY")
-    if not private_value or not verification_value:
-        raise ValueError(
-            "FALCON_PRIVATE_KEY and FALCON_VERIFICATION_KEY environment variables "
-            "are required"
-        )
-
-    try:
-        return (
-            base64.b64decode(private_value, validate=True),
-            base64.b64decode(verification_value, validate=True),
-        )
-    except (binascii.Error, ValueError) as error:
-        raise ValueError("Falcon keys must be valid Base64 strings") from error
 
 
 def _build_executable(app_path: Path, bundle_path: Path) -> Path:
