@@ -12,7 +12,9 @@ _KEM_CIPHERTEXT_SIZE = 32 * (ML_KEM_512.du * ML_KEM_512.k + ML_KEM_512.dv)
 
 def generate_key_pair() -> tuple[bytes, bytes]:
     """Generate a fresh ML-KEM-512 public/private key pair."""
-    return ML_KEM_512.keygen()
+    key_pair = ML_KEM_512.keygen()
+    logger.info("Generated ML-KEM-512 key pair")
+    return key_pair
 
 
 def _xor_with_keystream(data: bytes, shared_key: bytes) -> bytes:

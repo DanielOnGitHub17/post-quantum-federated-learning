@@ -1,6 +1,7 @@
 """Small Tkinter application for three-day stock-price predictions."""
 
 import pickle
+import logging
 from pathlib import Path
 import sys
 import tkinter as tk
@@ -15,6 +16,7 @@ COMPANIES = {"NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META"}
 FORECAST_DAYS = 3
 WINDOW_SIZE = 60
 MODEL_BUNDLE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / "models.pkl"
+logger = logging.getLogger(__name__)
 
 
 def load_models() -> dict[str, Any]:
@@ -34,10 +36,16 @@ def load_models() -> dict[str, Any]:
                 "Model bundle entries must contain company names and serialized models"
             )
         models[company] = pickle.loads(serialized_model)
+    logger.info(
+        "Loaded model bundle: path=%s companies=%s",
+        MODEL_BUNDLE,
+        ", ".join(sorted(models)),
+    )
     return models
 
 
 def predict_next_three_days(model: Any, company: str) -> np.ndarray:
+    logger.info("Fetching prediction data: company=%s", company)
     data = yf.download(company, period="3mo", interval="1d", progress=False)
     if data is None or data.empty:
         raise ValueError(f"No market data found for {company}")
@@ -57,7 +65,9 @@ def predict_next_three_days(model: Any, company: str) -> np.ndarray:
     prediction = model.predict(latest_window, verbose=0)[0]
     if len(prediction) != FORECAST_DAYS:
         raise ValueError(f"Model must return exactly {FORECAST_DAYS} predictions")
-    return np.asarray(prediction)
+    predictions = np.asarray(prediction)
+    logger.info("Prediction completed: company=%s days=%d", company, len(predictions))
+    return predictions
 
 
 class PredictionApp:
@@ -95,6 +105,11 @@ class PredictionApp:
 
 
 def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    logger.info("Starting stock prediction application")
     root = tk.Tk()
     root.title("Stock prediction")
     PredictionApp(root)

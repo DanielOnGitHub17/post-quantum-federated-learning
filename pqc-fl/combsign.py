@@ -1,12 +1,15 @@
 """Build and Falcon-sign the prediction application."""
 
 from hashlib import sha256
+import logging
 import pickle
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 from falcon_python import Falcon512
+
+logger = logging.getLogger(__name__)
 
 
 def combine_pmos(
@@ -32,6 +35,11 @@ def combine_pmos(
     app_path.mkdir(parents=True, exist_ok=True)
     bundle_path = app_path / "models.pkl"
     bundle_path.write_bytes(pickle.dumps(pmos, protocol=pickle.HIGHEST_PROTOCOL))
+    logger.info(
+        "Bundled partial models: companies=%s path=%s",
+        ", ".join(sorted(pmos)),
+        bundle_path,
+    )
 
     executable_path = _build_executable(app_path, bundle_path)
     digest = sha256(executable_path.read_bytes()).digest()
@@ -43,6 +51,12 @@ def combine_pmos(
     hash_path.write_text(digest.hex().upper() + "\n", encoding="ascii")
     signature_path.write_bytes(signature)
     verification_path.write_bytes(verification_key)
+    logger.info(
+        "Signed executable: executable=%s signature=%s verification_key=%s",
+        executable_path,
+        signature_path,
+        verification_path,
+    )
 
     return {
         "bundle": bundle_path,
@@ -92,4 +106,5 @@ def _build_executable(app_path: Path, bundle_path: Path) -> Path:
 
     shutil.rmtree(work_path, ignore_errors=True)
     spec_path.unlink(missing_ok=True)
+    logger.info("Built executable: path=%s", executable_path)
     return executable_path

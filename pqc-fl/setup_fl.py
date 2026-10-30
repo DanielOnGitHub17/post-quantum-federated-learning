@@ -16,8 +16,8 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-NODES = 2
-COMPANY_NAMES = ("NVDA", "AAPL")  # , "MSFT", "GOOGL", "AMZN", "META")
+NODES = 6
+COMPANY_NAMES = ("NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META")
 REQUEST_TIMEOUT = (5, 300)
 
 
@@ -47,6 +47,7 @@ def node_endpoints() -> dict[str, str]:
             f"NODE_ENDPOINTS must contain exactly one URL for each company: "
             f"{', '.join(COMPANY_NAMES)}"
         )
+    logger.info("Configured node endpoints: companies=%s", ", ".join(endpoints))
     return endpoints
 
 
@@ -82,6 +83,7 @@ def request_node(
 def start_federated_learning() -> dict[str, Any]:
     """Request all PMOs concurrently, then combine only a complete round."""
     endpoints = node_endpoints()
+    logger.info("Starting federated learning round: nodes=%d", len(endpoints))
     public_keys: dict[str, str] = {}
     private_keys: dict[str, bytes] = {}
     for company in endpoints:
