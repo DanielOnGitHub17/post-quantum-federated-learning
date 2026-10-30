@@ -1,7 +1,7 @@
 """Flask app that verifies an uploaded binary against its SHA-256 hash and Falcon-512 signature."""
 import hashlib
 import hmac
-import os
+from pathlib import Path
 
 from flask import Flask, render_template, request
 
@@ -9,15 +9,17 @@ from falcon import Falcon
 
 app = Flask(__name__)
 falcon = Falcon(512)
+DIST_PATH = Path(__file__).resolve().parents[1] / "pqc-fl" / "app" / "dist"
+ARTIFACT_PREFIX = DIST_PATH / "StockPredictor"
 
 
 def check(upload):
     """Return (ok, message, next_step) for the uploaded file; the file is only hashed, never run."""
     try:
-        expected_hash = bytes.fromhex(os.environ["APPLICATION_HASH"])
-        signature = bytes.fromhex(os.environ["APPLICATION_SIGNATURE"])
-        key = bytes.fromhex(os.environ["FALCON_VERIFICATION_KEY"])
-    except (KeyError, ValueError):
+        expected_hash = bytes.fromhex(ARTIFACT_PREFIX.with_suffix(".sha256").read_text(encoding="ascii").strip())
+        signature = ARTIFACT_PREFIX.with_suffix(".sig").read_bytes()
+        key = ARTIFACT_PREFIX.with_suffix(".pub").read_bytes()
+    except (OSError, UnicodeError, ValueError):
         return False, "Checker not set up.", "Try again later."
 
     data = upload.read() if upload and upload.filename else b""

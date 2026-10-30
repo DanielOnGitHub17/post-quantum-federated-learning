@@ -5,19 +5,15 @@ Build a small Flask web app that verifies an uploaded application binary.
 
 ## Flow
 
-- [x] Configure the app to receive these values through environment variables:
-  - `APPLICATION_HASH`: expected application SHA-256 hash.
-  - `APPLICATION_SIGNATURE`: expected application signature.
-  - `FALCON_VERIFICATION_KEY`: Falcon verification key.
-- [x] Read the expected application SHA-256 hash from the
-      `APPLICATION_HASH` environment variable.
-- [x] Read the expected application signature from the
-      `APPLICATION_SIGNATURE` environment variable.
-- [x] Read the Falcon verification key from the
-      `FALCON_VERIFICATION_KEY` environment variable.
+- [x] Read the expected application SHA-256 hash from
+      `pqc-fl/app/dist/StockPredictor.sha256`.
+- [x] Read the expected application signature from
+      `pqc-fl/app/dist/StockPredictor.sig`.
+- [x] Read the Falcon verification key from
+      `pqc-fl/app/dist/StockPredictor.pub`.
 - [x] Provide a page where a user can upload the application binary.
 - [x] Compute the SHA-256 hash of the uploaded binary.
-- [x] Compare the computed hash with `APPLICATION_HASH`.
+- [x] Compare the computed hash with the stored application hash.
 - [x] Stop and report failure when the hashes do not match.
 - [x] Falcon-verify the computed hash using the application signature and
       verification key.

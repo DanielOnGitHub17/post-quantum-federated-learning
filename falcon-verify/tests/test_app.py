@@ -3,7 +3,10 @@ import io
 
 import pytest
 
-from app import app, falcon
+import app as app_module
+
+app = app_module.app
+falcon = app_module.falcon
 
 BINARY = b"\x7fELF example application"
 
@@ -14,12 +17,14 @@ def keys():
 
 
 @pytest.fixture
-def client(keys, monkeypatch):
+def client(keys, monkeypatch, tmp_path):
     sk, vk = keys
     digest = hashlib.sha256(BINARY).digest()
-    monkeypatch.setenv("APPLICATION_HASH", digest.hex())
-    monkeypatch.setenv("APPLICATION_SIGNATURE", falcon.sign(sk, digest).hex())
-    monkeypatch.setenv("FALCON_VERIFICATION_KEY", vk.hex())
+    artifact_prefix = tmp_path / "StockPredictor"
+    artifact_prefix.with_suffix(".sha256").write_text(digest.hex(), encoding="ascii")
+    artifact_prefix.with_suffix(".sig").write_bytes(falcon.sign(sk, digest))
+    artifact_prefix.with_suffix(".pub").write_bytes(vk)
+    monkeypatch.setattr(app_module, "ARTIFACT_PREFIX", artifact_prefix)
     return app.test_client()
 
 
@@ -37,7 +42,7 @@ def test_modified_binary_fails_hash(client):
 
 def test_invalid_signature_fails(client, keys, monkeypatch):
     other = falcon.sign(keys[0], b"something else")
-    monkeypatch.setenv("APPLICATION_SIGNATURE", other.hex())
+    app_module.ARTIFACT_PREFIX.with_suffix(".sig").write_bytes(other)
     assert "Signature is not valid" in upload(client, BINARY)
 
 
@@ -45,6 +50,6 @@ def test_empty_upload_fails(client):
     assert "No file received" in upload(client, b"")
 
 
-def test_missing_env_fails_safely(client, monkeypatch):
-    monkeypatch.delenv("FALCON_VERIFICATION_KEY")
+def test_missing_artifact_fails_safely(client):
+    app_module.ARTIFACT_PREFIX.with_suffix(".pub").unlink()
     assert "not set up" in upload(client, BINARY)
